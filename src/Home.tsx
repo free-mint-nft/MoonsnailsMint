@@ -377,6 +377,7 @@ const Home = (props: HomeProps) => {
     const [whitelistTokenBalance, setWhitelistTokenBalance] = useState(0);
     const [isWhitelist, setIsWhitelist] = useState(true);  //whitelist에 있는가?
     const [isMinted, setIsMinted] = useState(false); // minting을 했는가?
+    const [selected,setIsSelected] = useState(3); // minting 개수 설정
 
     const [alertState, setAlertState] = useState<AlertState>({
         open: false,
@@ -578,90 +579,89 @@ const Home = (props: HomeProps) => {
         }
     };
 
-    // const onMint_1 = async () => {
-    //     try {
-    //         setIsMinting(true);
-    //         if (wallet && candyMachine?.program && wallet.publicKey) {
-    //             const mintTxId: any = (
-    //                 await mintOneToken_2(candyMachine, wallet.publicKey)
-    //             );
+    const onMint_1 = async () => {
+        try {
+            setIsMinting(true);
+            if (wallet && candyMachine?.program && wallet.publicKey) {
+                const mintTxId: any = (
+                    await mintOneToken_2(candyMachine, wallet.publicKey, selected)
+                );
 
-    //             const promiseArray = [];
+                const promiseArray = [];
 
-    //             for (let index = 0; index < mintTxId.length; index++) {
-    //                 promiseArray.push(
-    //                     awaitTransactionSignatureConfirmation(
-    //                         mintTxId[index],
-    //                         props.txTimeout,
-    //                         props.connection,
-    //                         'singleGossip',
-    //                         true
-    //                         )
-    //                     );
-    //             }
+                for (let index = 0; index < mintTxId.length; index++) {
+                    promiseArray.push(
+                        awaitTransactionSignatureConfirmation(
+                            mintTxId[index],
+                            props.txTimeout,
+                            props.connection,
+                            'singleGossip',
+                            true
+                            )
+                        );
+                }
 
-    //             const allTransactionsResult = await Promise.all(promiseArray);
-    //             let totalSuccess = 0;
-    //             let totalFailure = 0;
-    //             for (let index = 0; index < allTransactionsResult.length; index++) {
-    //                 const transactionStatus = allTransactionsResult[index];
-    //                 if (!transactionStatus?.err) {
-    //                     totalSuccess += 1;
-    //                 } else {
-    //                     totalFailure += 1;
-    //                 }
-    //             }
-    //             if (totalSuccess) {
-    //                 setAlertState({
-    //                     open: true,
-    //                     message: `Congratulations! ${totalSuccess} mints succeeded!`,
-    //                     severity: 'success',
-    //                 });
-    //                 // update front-end amounts
-    //                 displaySuccess_2();
-    //             }
+                const allTransactionsResult = await Promise.all(promiseArray);
+                let totalSuccess = 0;
+                let totalFailure = 0;
+                for (let index = 0; index < allTransactionsResult.length; index++) {
+                    const transactionStatus = allTransactionsResult[index];
+                    if (!transactionStatus?.err) {
+                        totalSuccess += 1;
+                    } else {
+                        totalFailure += 1;
+                    }
+                }
+                if (totalSuccess) {
+                    setAlertState({
+                        open: true,
+                        message: `Congratulations! ${totalSuccess} mints succeeded!`,
+                        severity: 'success',
+                    });
+                    // update front-end amounts
+                    displaySuccess_2();
+                }
 
-    //             if (totalFailure) {
-    //                 setAlertState({
-    //                     open: true,
-    //                     message: `Some mints failed! ${totalFailure} mints failed!`,
-    //                     severity: 'error',
-    //                 });
-    //                 // update front-end amounts
-    //                 displaySuccess_2();
-    //             }
+                if (totalFailure) {
+                    setAlertState({
+                        open: true,
+                        message: `Some mints failed! ${totalFailure} mints failed!`,
+                        severity: 'error',
+                    });
+                    // update front-end amounts
+                    displaySuccess_2();
+                }
 
-    //         }
-    //     } catch (error: any) {
-    //         // TODO: blech:
-    //         let message = error.msg || 'Minting failed! Please try again!';
-    //         if (!error.msg) {
-    //             if (!error.message) {
-    //                 message = 'Transaction Timeout! Please try again.';
-    //             } else if (error.message.indexOf('0x138')) {
-    //             } else if (error.message.indexOf('0x137')) {
-    //                 message = `SOLD OUT!`;
-    //             } else if (error.message.indexOf('0x135')) {
-    //                 message = `Insufficient funds to mint. Please fund your wallet.`;
-    //             }
-    //         } else {
-    //             if (error.code === 311) {
-    //                 message = `SOLD OUT!`;
-    //             } else if (error.code === 312) {
-    //                 message = `Minting period hasn't started yet.`;
-    //             }
-    //         }
+            }
+        } catch (error: any) {
+            // TODO: blech:
+            let message = error.msg || 'Minting failed! Please try again!';
+            if (!error.msg) {
+                if (!error.message) {
+                    message = 'Transaction Timeout! Please try again.';
+                } else if (error.message.indexOf('0x138')) {
+                } else if (error.message.indexOf('0x137')) {
+                    message = `SOLD OUT!`;
+                } else if (error.message.indexOf('0x135')) {
+                    message = `Insufficient funds to mint. Please fund your wallet.`;
+                }
+            } else {
+                if (error.code === 311) {
+                    message = `SOLD OUT!`;
+                } else if (error.code === 312) {
+                    message = `Minting period hasn't started yet.`;
+                }
+            }
 
-    //         setAlertState({
-    //             open: true,
-    //             message,
-    //             severity: "error",
-    //         });
-    //     } finally {
-    //         setIsMinting(false);
-    //     }
-    // };
-
+            setAlertState({
+                open: true,
+                message,
+                severity: "error",
+            });
+        } finally {
+            setIsMinting(false);
+        }
+    };
 
     useEffect(() => {
         (async () => {
@@ -765,7 +765,7 @@ const Home = (props: HomeProps) => {
                                             isMinting={isMinting}
                                             isActive={isActive}
                                             isSoldOut={isSoldOut}
-                                            onMint={onMint}
+                                            onMint={onMint_1}
                                             isWhitelist={isWhitelist}
                                         />
                                     </GatewayProvider>
@@ -776,7 +776,7 @@ const Home = (props: HomeProps) => {
                                         isMinting={isMinting}
                                         isActive={isActive}
                                         isSoldOut={isSoldOut}
-                                        onMint={onMint}
+                                        onMint={onMint_1}
                                         isWhitelist={isWhitelist}
                                     />
                                     </MintButtonContainer>

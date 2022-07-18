@@ -5,12 +5,6 @@ import {CircularProgress, Paper} from '@material-ui/core';
 import {GatewayStatus, useGateway} from '@civic/solana-gateway-react';
 import {CandyMachine} from './candy-machine';
 
-
-const Image = styled.img`
-  height: 100px;
-  width: 250px;
-`;
-
 export const CTAButton = styled(Button)`
   display: block !important;
   margin: 0 !important;
